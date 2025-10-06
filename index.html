@@ -3,6 +3,7 @@
 <head>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- 添加Chart.js -->
     <script>
         angular.module("webapp-example", []).controller('WebAppController', function($scope) {
             $scope.preferences = [
@@ -12,28 +13,52 @@
                 { name: "Dairy", value: 5 }
             ];
 
-            // Set up Telegram's main button
+            // 更新图表函数
+            function updateChart() {
+                const ctx = document.getElementById('prefChart').getContext('2d');
+                if (window.myChart) window.myChart.destroy(); // 销毁旧图表
+                const total = $scope.preferences.reduce((sum, p) => sum + p.value, 0);
+                const avg = total / 4;
+                window.myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: $scope.preferences.map(p => p.name),
+                        datasets: [{
+                            label: 'Preference Level (1-10)',
+                            data: $scope.preferences.map(p => p.value),
+                            backgroundColor: $scope.preferences.map(p => p.value >= avg ? 'rgba(75, 192, 192, 0.6)' : 'rgba(255, 99, 132, 0.6)')
+                        }]
+                    },
+                    options: { scales: { y: { beginAtZero: true, max: 10 } } }
+                });
+            }
+
+            // 初始化图表
+            $scope.$watch('preferences', updateChart, true);
+
+            // Telegram主按钮
             const mainButton = window.Telegram.WebApp.MainButton;
-            mainButton.text = "Save Preferences";
+            mainButton.text = "Generate My Plan";
             mainButton.enable();
             mainButton.show();
 
             mainButton.onClick(function() {
-                // Send data back to bot as JSON
                 window.Telegram.WebApp.sendData(JSON.stringify($scope.preferences));
                 window.Telegram.WebApp.close();
             });
 
-            // Expand the app on load
             window.Telegram.WebApp.expand();
         });
     </script>
 </head>
 <body ng-controller="WebAppController">
     <h2>Set Your Food Preferences</h2>
+    <p>Adjust sliders and see the balance preview below.</p>
     <div ng-repeat="pref in preferences">
-        <label>{{pref.name}}: {{pref.value}}</label>
-        <input type="range" min="1" max="10" ng-model="pref.value">
+        <label>{{pref.name}}: {{pref.value}}/10</label>
+        <input type="range" min="1" max="10" ng-model="pref.value" style="width:100%;">
     </div>
+    <canvas id="prefChart" width="400" height="200"></canvas>
+    <p><em>Green bars indicate balanced preferences; aim for even distribution!</em></p>
 </body>
 </html>
