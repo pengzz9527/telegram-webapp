@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html ng-app="webapp-example" lang="en">
+<head>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script>
+        angular.module("webapp-example", []).controller('WebAppController', function($scope) {
+            $scope.preferences = [
+                { name: "Fruits", value: 5 },
+                { name: "Vegetables", value: 5 },
+                { name: "Meat", value: 5 },
+                { name: "Dairy", value: 5 }
+            ];
+
+            // Set up Telegram's main button
+            const mainButton = window.Telegram.WebApp.MainButton;
+            mainButton.text = "Save Preferences";
+            mainButton.enable();
+            mainButton.show();
+
+            mainButton.onClick(function() {
+                // Send data back to bot as JSON
+                window.Telegram.WebApp.sendData(JSON.stringify($scope.preferences));
+                window.Telegram.WebApp.close();
+            });
+
+            // Expand the app on load
+            window.Telegram.WebApp.expand();
+        });
+    </script>
+</head>
+<body ng-controller="WebAppController">
+    <h2>Set Your Food Preferences</h2>
+    <div ng-repeat="pref in preferences">
+        <label>{{pref.name}}: {{pref.value}}</label>
+        <input type="range" min="1" max="10" ng-model="pref.value">
+    </div>
+</body>
+</html>
